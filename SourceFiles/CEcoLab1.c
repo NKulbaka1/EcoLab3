@@ -119,19 +119,17 @@ static uint32_t ECOCALLMETHOD CEcoLab1_Release(/* in */ IEcoLab1Ptr_t me) {
 /*
  *
  * <сводка>
- *   Функция Fire_OnMyCallback
+ *   Функция Fire_OnSortSwap
  * </сводка>
  *
  * <описание>
- *   Функция вызова обратного интерфейса
+ *   Событие обмена элементов
  * </описание>
  *
  */
-int16_t ECOCALLMETHOD CEcoLab1_Fire_OnMyCallback(/* in */ struct IEcoLab1* me, /* in */ char_t* Name) {
+int16_t ECOCALLMETHOD CEcoLab1_Fire_OnSortSwap(/* in */ struct IEcoLab1* me, /* in */ uint32_t index1, /* in */ uint32_t index2) {
     CEcoLab1* pCMe = (CEcoLab1*)me;
     int16_t result = 0;
-    uint32_t count = 0;
-    uint32_t index = 0;
     IEcoEnumConnections* pEnum = 0;
     IEcoLab1Events* pIEvents = 0;
     EcoConnectionData cd;
@@ -146,7 +144,91 @@ int16_t ECOCALLMETHOD CEcoLab1_Fire_OnMyCallback(/* in */ struct IEcoLab1* me, /
             while (pEnum->pVTbl->Next(pEnum, 1, &cd, 0) == 0) {
                 result = cd.pUnk->pVTbl->QueryInterface(cd.pUnk, &IID_IEcoLab1Events, (void**)&pIEvents);
                 if ( (result == 0) && (pIEvents != 0) ) {
-                    result = pIEvents->pVTbl->OnMyCallback(pIEvents, Name);
+                    if (pIEvents->pVTbl->OnSortSwap != 0) {
+                        result = pIEvents->pVTbl->OnSortSwap(pIEvents, index1, index2);
+                    }
+                    pIEvents->pVTbl->Release(pIEvents);
+                }
+                cd.pUnk->pVTbl->Release(cd.pUnk);
+            }
+            pEnum->pVTbl->Release(pEnum);
+        }
+    }
+    return result;
+}
+
+/*
+ *
+ * <сводка>
+ *   Функция Fire_OnSortCompare
+ * </сводка>
+ *
+ * <описание>
+ *   Событие сравнения элементов
+ * </описание>
+ *
+ */
+int16_t ECOCALLMETHOD CEcoLab1_Fire_OnSortCompare(/* in */ struct IEcoLab1* me, /* in */ uint32_t index1, /* in */ uint32_t index2, /* in */ int32_t value1, /* in */ int32_t value2) {
+    CEcoLab1* pCMe = (CEcoLab1*)me;
+    int16_t result = 0;
+    IEcoEnumConnections* pEnum = 0;
+    IEcoLab1Events* pIEvents = 0;
+    EcoConnectionData cd;
+
+    if (me == 0 ) {
+        return -1;
+    }
+
+    if (pCMe->m_pISinkCP != 0) {
+        result = ((IEcoConnectionPoint*)pCMe->m_pISinkCP)->pVTbl->EnumConnections((IEcoConnectionPoint*)pCMe->m_pISinkCP, &pEnum);
+        if ( (result == 0) && (pEnum != 0) ) {
+            while (pEnum->pVTbl->Next(pEnum, 1, &cd, 0) == 0) {
+                result = cd.pUnk->pVTbl->QueryInterface(cd.pUnk, &IID_IEcoLab1Events, (void**)&pIEvents);
+                if ( (result == 0) && (pIEvents != 0) ) {
+                    if (pIEvents->pVTbl->OnSortCompare != 0) {
+                        result = pIEvents->pVTbl->OnSortCompare(pIEvents, index1, index2, value1, value2);
+                    }
+                    pIEvents->pVTbl->Release(pIEvents);
+                }
+                cd.pUnk->pVTbl->Release(cd.pUnk);
+            }
+            pEnum->pVTbl->Release(pEnum);
+        }
+    }
+    return result;
+}
+
+/*
+ *
+ * <сводка>
+ *   Функция Fire_OnSortIteration
+ * </сводка>
+ *
+ * <описание>
+ *   Событие начала новой итерации
+ * </описание>
+ *
+ */
+int16_t ECOCALLMETHOD CEcoLab1_Fire_OnSortIteration(/* in */ struct IEcoLab1* me, /* in */ uint32_t iteration) {
+    CEcoLab1* pCMe = (CEcoLab1*)me;
+    int16_t result = 0;
+    IEcoEnumConnections* pEnum = 0;
+    IEcoLab1Events* pIEvents = 0;
+    EcoConnectionData cd;
+
+    if (me == 0 ) {
+        return -1;
+    }
+
+    if (pCMe->m_pISinkCP != 0) {
+        result = ((IEcoConnectionPoint*)pCMe->m_pISinkCP)->pVTbl->EnumConnections((IEcoConnectionPoint*)pCMe->m_pISinkCP, &pEnum);
+        if ( (result == 0) && (pEnum != 0) ) {
+            while (pEnum->pVTbl->Next(pEnum, 1, &cd, 0) == 0) {
+                result = cd.pUnk->pVTbl->QueryInterface(cd.pUnk, &IID_IEcoLab1Events, (void**)&pIEvents);
+                if ( (result == 0) && (pIEvents != 0) ) {
+                    if (pIEvents->pVTbl->OnSortIteration != 0) {
+                        result = pIEvents->pVTbl->OnSortIteration(pIEvents, iteration);
+                    }
                     pIEvents->pVTbl->Release(pIEvents);
                 }
                 cd.pUnk->pVTbl->Release(cd.pUnk);
@@ -222,8 +304,17 @@ static int16_t ECOCALLMETHOD CEcoLab1_BubbleSort(/* in */ IEcoLab1Ptr_t me, /* i
     /* Сортировка пузырьком */
     for (i = 0; i < length - 1; i++) {
 		swapped = 0;
+
+		CEcoLab1_Fire_OnSortIteration(me, i);
+
         for (j = 0; j < length - i - 1; j++) {
+
+			CEcoLab1_Fire_OnSortCompare(me, j, j+1, outputArray[j], outputArray[j+1]);
+
             if (outputArray[j] > outputArray[j + 1]) {
+
+				CEcoLab1_Fire_OnSortSwap(me, j, j+1);
+
                 temp = outputArray[j];
                 outputArray[j] = outputArray[j + 1];
                 outputArray[j + 1] = temp;
@@ -236,9 +327,6 @@ static int16_t ECOCALLMETHOD CEcoLab1_BubbleSort(/* in */ IEcoLab1Ptr_t me, /* i
     }
 
     *sortedArray = outputArray;
-
-	/* Обратный вызов */
-    CEcoLab1_Fire_OnMyCallback(me, pCMe->m_Name);
 
     return ERR_ECO_SUCCESES;
 }

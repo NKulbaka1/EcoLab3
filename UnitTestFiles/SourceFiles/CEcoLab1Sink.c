@@ -99,25 +99,33 @@ uint32_t ECOCALLMETHOD CEcoLab1Sink_Release(/* in */ struct IEcoLab1Events* me) 
     return pCMe->m_cRef;
 }
 
-/*
- *
- * <сводка>
- *   Функция OnMyCallback
- * </сводка>
- *
- * <описание>
- *   Функция обратного вызова
- * </описание>
- *
- */
-int16_t ECOCALLMETHOD CEcoLab1Sink_OnMyCallback(/* in */ struct IEcoLab1Events* me, /* in */ char_t* Name) {
+int16_t ECOCALLMETHOD CEcoLab1Sink_OnSortSwap(/* in */ struct IEcoLab1Events* me, /* in */ uint32_t index1, /* in */ uint32_t index2) {
     CEcoLab1Sink* pCMe = (CEcoLab1Sink*)me;
 
-    if (me == 0 ) {
+    if (me == 0) {
         return -1;
     }
 
+    printf("Swap event: positions %u <-> %u\n", index1, index2);
+    return 0;
+}
 
+int16_t ECOCALLMETHOD CEcoLab1Sink_OnSortCompare(/* in */ struct IEcoLab1Events* me, /* in */ uint32_t index1, /* in */ uint32_t index2, /* in */ int32_t value1, /* in */ int32_t value2) {
+    CEcoLab1Sink* pCMe = (CEcoLab1Sink*)me;
+    if (me == 0) {
+        return -1;
+    }
+    // Просто выводим информацию о сравнении
+    printf("Compare event: [%u]=%d vs [%u]=%d\n", index1, value1, index2, value2);
+    return 0;
+}
+
+int16_t ECOCALLMETHOD CEcoLab1Sink_OnSortIteration(/* in */ struct IEcoLab1Events* me, /* in */ uint32_t iteration) {
+    CEcoLab1Sink* pCMe = (CEcoLab1Sink*)me;
+    if (me == 0) {
+        return -1;
+    }
+    printf("--- Iteration %u started ---\n", iteration);
     return 0;
 }
 
@@ -192,7 +200,9 @@ IEcoLab1VTblEvents g_x2D2E3B9214F248A6A09ECB494B59C795VTblEvents = {
     CEcoLab1Sink_QueryInterface,
     CEcoLab1Sink_AddRef,
     CEcoLab1Sink_Release,
-    CEcoLab1Sink_OnMyCallback
+	CEcoLab1Sink_OnSortSwap,
+    CEcoLab1Sink_OnSortCompare,
+    CEcoLab1Sink_OnSortIteration
 };
 
 /*
