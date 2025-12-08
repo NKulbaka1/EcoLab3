@@ -40,7 +40,9 @@ typedef struct IEcoLab1VTblEvents {
     uint32_t (ECOCALLMETHOD *Release )(/* in */ struct IEcoLab1Events* me);
 
     /* IEcoLab1Events */
-    int16_t (ECOCALLMETHOD *OnMyCallback)(/* in */ struct IEcoLab1Events* me, /* in */ char_t* Name);
+	int16_t (ECOCALLMETHOD *OnSortSwap)(/* in */ struct IEcoLab1Events* me, /* in */ uint32_t index1, /* in */ uint32_t index2);
+    int16_t (ECOCALLMETHOD *OnSortCompare)(/* in */ struct IEcoLab1Events* me, /* in */ uint32_t index1, /* in */ uint32_t index2, /* in */ int32_t value1, /* in */ int32_t value2);
+    int16_t (ECOCALLMETHOD *OnSortIteration)(/* in */ struct IEcoLab1Events* me, /* in */ uint32_t iteration);
 
 } IEcoLab1VTblEvents, *IEcoLab1VTblEventsPtr;
 
